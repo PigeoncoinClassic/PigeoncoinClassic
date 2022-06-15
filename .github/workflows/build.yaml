@@ -1,14 +1,11 @@
----
-name: Pigeoncoin Build
+name: Continuous Integration on Master
 on:
   push:
     branches:
-      - master
-      - develop
-      - 'ft/*'
+    - master
   pull_request:
     branches:
-      - master
+    - master
 env:
   SOURCE_ARTIFACT: source
 jobs:
@@ -34,7 +31,7 @@ jobs:
     - name: Create Distribution Tarball
       run: |
         ./autogen.sh
-        ./configure --with-miniupnpc
+        ./configure --with-incompatible-bdb --with-miniupnpc
         make dist
     - name: Download Dependencies
       run: make -C depends download
@@ -43,334 +40,156 @@ jobs:
     - name: Prepare Files for Artifact
       run: |
         mkdir -p $ARTIFACT_DIR
-        mv depends.tar.gz dingocoin-*.tar.gz $ARTIFACT_DIR
+        mv depends.tar.gz pigeoncoinclassic-*.tar.gz $ARTIFACT_DIR
     - name: Upload Artifact
       uses: actions/upload-artifact@v1
       with:
         name: ${{ env.SOURCE_ARTIFACT }}
         path: ${{ env.ARTIFACT_DIR }}
+  build-linux:
+    name: Build for Linux
+    needs: create-source-distribution
+    runs-on: ubuntu-18.04
+    env:
+      ARTIFACT_DIR: linux-binaries
+      TEST_LOG_ARTIFACT_DIR: test-logs
+    steps:
+    - name: Getting Source
+      uses: actions/download-artifact@v1
+      with:
+        name: ${{ env.SOURCE_ARTIFACT }}
+    - name: Extract Archives
+      run: |
+        tar -xzf depends.tar.gz
+        tar -xzf pigeoncoinclassic-*.tar.gz --strip-components=1
+      working-directory: ${{ env.SOURCE_ARTIFACT }}
+    - name: Install Required Packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y python3-zmq
+    - name: Build Dependencies
+      run: make -C depends -j$(nproc)
+      working-directory: ${{ env.SOURCE_ARTIFACT }}
+    - name: Build Pigeoncoinclassic
+      run: |
+        ./configure --prefix=$(realpath depends/x86_64-pc-linux-gnu)
+        make -j$(nproc)
+      working-directory: ${{ env.SOURCE_ARTIFACT }}
+    - name: Prepare Files for Artifact
+      run: |
+        mkdir -p $ARTIFACT_DIR
+        mv $SOURCE_ARTIFACT/src/{pigeoncoinclassic-cli,pigeoncoinclassic-tx,pigeoncoinclassicd,qt/pigeoncoinclassic-qt} $ARTIFACT_DIR
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v1
+      with:
+        name: linux-binaries
+        path: ${{ env.ARTIFACT_DIR }}
+  build-windows:
+    name: Build for Windows
+    needs: create-source-distribution
+    runs-on: ubuntu-18.04
+    env:
+      ARTIFACT_DIR: windows-binaries
+    steps:
+    - name: Getting Source
+      uses: actions/download-artifact@v1
+      with:
+        name: ${{ env.SOURCE_ARTIFACT }}
+    - name: Extract Archives
+      run: |
+        tar -xzf depends.tar.gz
+        tar -xzf pigeoncoinclassic-*.tar.gz --strip-components=1
+      working-directory: ${{ env.SOURCE_ARTIFACT }}
+    - name: Install Required Packages
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y g++-mingw-w64-x86-64 gcc-mingw-w64-x86-64
+    - name: Switch MinGW GCC and G++ to POSIX Threading
+      run: |
+        sudo update-alternatives --set x86_64-w64-mingw32-gcc /usr/bin/x86_64-w64-mingw32-gcc-posix
+        sudo update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix
+    - name: Build Dependencies
+      run: make -C depends -j$(nproc) HOST=x86_64-w64-mingw32
+      working-directory: ${{ env.SOURCE_ARTIFACT }}
+    - name: Build Pigeoncoinclassic
+      run: |
+        ./configure --prefix=$(realpath depends/x86_64-w64-mingw32)
+        make -j$(nproc)
+      working-directory: ${{ env.SOURCE_ARTIFACT }}
+    - name: Prepare Files for Artifact
+      run: |
+        mkdir -p $ARTIFACT_DIR
+        mv $SOURCE_ARTIFACT/src/{pigeoncoinclassic-cli.exe,pigeoncoinclassic-tx.exe,pigeoncoinclassicd.exe,qt/pigeoncoinclassic-qt.exe} $ARTIFACT_DIR
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v1
+      with:
+        name: windows-binaries
+        path: ${{ env.ARTIFACT_DIR }}
 
-  build-ubuntu18:
-    name: Ubuntu18 build
-    needs: checking-build-version
-    runs-on: ubuntu-18.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Getting Version
-        uses: actions/download-artifact@v1
-        with:
-          name: version
-      - name: Extract version
-        run: |
-          cat version/version.txt >> $GITHUB_ENV
-      - name: Install Required Packages
-        run: |
-          echo "building $BUILD_VERSION version"
-          sudo apt-get update -y
-          sudo apt-get upgrade -y
-          sudo apt-get install curl build-essential libtool autotools-dev automake pkg-config python3 bsdmainutils cmake
-      - name: build depends
-        run: |
-          echo "building with $(nproc) threads"
-          make -C depends -j$(nproc)
-      - name: configure
-        run: |
-          ./autogen.sh
-          ./configure --prefix=`pwd`/depends/x86_64-pc-linux-gnu
-      - name: build binary
-        run: |
-          make -j$(nproc)
-          mkdir -p $BUILD_DIR
-          mv src/{pigeon-cli,pigeon-tx,pigeond,qt/pigeon-qt} $BUILD_DIR/
-          strip $BUILD_DIR/*
-      - name: generate checksum and compress
-        run: |
-          echo "buildng $BUILD_VERSION version"
-          cd $BUILD_DIR
-          echo "sha256:" >> checksums.txt
-          echo "------------------------------------" >> checksums.txt
-          shasum * >> checksums.txt
-          echo "------------------------------------" >> checksums.txt
-          echo "openssl-sha256:" >> checksums.txt
-          echo "------------------------------------" >> checksums.txt
-          sha256sum * >> checksums.txt
-          cat checksums.txt
-          cd ..
-          tar -cvzf ${COIN_NAME}-ubuntu18-${BUILD_VERSION}.tar.gz $BUILD_DIR/*
-          mkdir -p ${COMPRESS_DIR}
-          mv ${COIN_NAME}-ubuntu18-${BUILD_VERSION}.tar.gz ${COMPRESS_DIR}/
-          cd ${COMPRESS_DIR}
-          echo "sha256: `shasum ${COIN_NAME}-ubuntu18-${BUILD_VERSION}.tar.gz`" >> checksums.txt
-          echo "openssl-sha256: `sha256sum ${COIN_NAME}-ubuntu18-${BUILD_VERSION}.tar.gz`" >> checksums.txt
-          cd ..
-          cat ${COMPRESS_DIR}/checksums.txt
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ env.COIN_NAME }}-ubuntu18-${{ env.BUILD_VERSION }}
-          path: ${{ env.COMPRESS_DIR }}
+  # MacOS build script adapted from https://github.com/dogecoin/dogecoin/blob/master/.github/workflows/ci.yml
   build-macos:
-    name: macos build
-    needs: checking-build-version
-    runs-on: macos-10.15
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Getting Version
-        uses: actions/download-artifact@v1
-        with:
-          name: version
-      - name: Extract version
-        run: |
-          cat version/version.txt >> $GITHUB_ENV
-      - name: Install Required Packages
-        run: |
-          brew install automake libtool pkg-config miniupnpc librsvg libnatpmp zeromq python
-          pip3 install ds_store mac_alias
-      - name: build depends
-        run: |
-          echo "building with $(nproc) threads"
-          make -C depends -j8
-      - name: configure
-        run: |
-          ./autogen.sh
-          ./configure --prefix=`pwd`/depends/x86_64-apple-darwin19.6.0
-      - name: build binary
-        run: |
-          make -j8
-          mkdir -p $BUILD_DIR
-          mv src/{pigeon-cli,pigeon-tx,pigeond,qt/pigeon-qt} $BUILD_DIR/
-          strip $BUILD_DIR/*
-      - name: generate checksum and compress
-        run: |
-          echo "buildng $BUILD_VERSION version"
-          cd $BUILD_DIR
-          echo "sha256:" >> checksums.txt
-          echo "------------------------------------" >> checksums.txt
-          shasum * >> checksums.txt
-          echo "------------------------------------" >> checksums.txt
-          echo "openssl-sha256:" >> checksums.txt
-          echo "------------------------------------" >> checksums.txt
-          openssl sha256 * >> checksums.txt
-          cat checksums.txt
-          cd ..
-          tar -cvzf ${COIN_NAME}-macos-${BUILD_VERSION}.tar.gz $BUILD_DIR/*
-          mkdir -p ${COMPRESS_DIR}
-          mv ${COIN_NAME}-macos-${BUILD_VERSION}.tar.gz ${COMPRESS_DIR}/
-          cd ${COMPRESS_DIR}
-          echo "sha256: `shasum ${COIN_NAME}-macos-${BUILD_VERSION}.tar.gz`" >> checksums.txt
-          echo "openssl-sha256: `openssl sha256 ${COIN_NAME}-macos-${BUILD_VERSION}.tar.gz`" >> checksums.txt
-          cat checksums.txt
-          cd ..
-      - name: Upload Binary Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ env.COIN_NAME }}-macos-${{ env.BUILD_VERSION }}
-          path: ${{ env.COMPRESS_DIR }}
-      - name: Generate Macos dmg files
-        run: |
-          make deploy
-          mkdir -p macos-dmg
-          mv Pigeoncoin-Qt.dmg macos-dmg/
-          cd macos-dmg
-          echo "sha256: `shasum Pigeoncoin-Qt.dmg`" >> checksums.txt
-          echo "openssl-sha256: `openssl sha256 Pigeoncoin-Qt.dmg`" >> checksums.txt
-          cd ..
-      - name: Upload dmg file
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ env.COIN_NAME }}-dmg-${{ env.BUILD_VERSION }}
-          path: macos-dmg
-  build-arm-32:
-    name: arm 32 bit build
-    needs: checking-build-version
+    name: Build for MacOS
+    needs: create-source-distribution
     runs-on: ubuntu-18.04
+    env:
+      name: x86_64-macos
+      host: x86_64-apple-darwin11
+      os: ubuntu-18.04
+      packages: cmake imagemagick libcap-dev librsvg2-bin libz-dev libtiff-tools libtinfo5 python3-setuptools xorriso libtinfo5
+      config-opts: "--enable-gui=qt5 --enable-reduce-exports"
+      goal: deploy
+      sdk: 10.11
+      sdk-url: "https://bitcoincore.org/depends-sources/sdks"
     steps:
+      - name: Install packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install build-essential libtool autotools-dev automake pkg-config bsdmainutils curl ca-certificates ccache python3 rsync git procps bison
+          sudo apt-get install ${{ env.packages }}
       - name: Checkout
         uses: actions/checkout@v2
-      - name: Getting Version
-        uses: actions/download-artifact@v1
+      - name: SDK cache
+        if: ${{ env.sdk }}
+        uses: actions/cache@v2
+        env:
+          cache-name: sdk
         with:
-          name: version
-      - name: Extract version
+          path: ./depends/sdk-sources
+          key: ${{ env.name }}-${{ env.cache-name }}
+      - name: Install SDK
+        if: ${{ env.sdk }}
         run: |
-          cat version/version.txt >> $GITHUB_ENV
-      - name: Install Required Packages
+          mkdir -p ./depends/sdk-sources
+          mkdir -p ./depends/SDKs
+          curl --location --fail ${{ env.sdk-url }}/MacOSX${{ env.sdk }}.sdk.tar.gz -o depends/sdk-sources/MacOSX${{ env.sdk }}.sdk.tar.gz
+          tar -C depends/SDKs -xf depends/sdk-sources/MacOSX${{ env.sdk }}.sdk.tar.gz
+      - name: Dependency cache
+        uses: actions/cache@v2
+        env:
+          cache-name: depends
+        with:
+          path: ./depends/built
+          key: ${{ env.name }}-${{ env.cache-name }}-${{ hashFiles('depends/packages/*') }}
+      - name: Build depends
         run: |
-          sudo apt-get update -y
-          sudo apt-get upgrade -y
-          sudo apt-get install curl build-essential libtool g++-arm-linux-gnueabihf autotools-dev automake pkg-config python3 bsdmainutils cmake
-      - name: build depends
+          make -C depends HOST=${{ env.host }}
+      - name: CCache
+        uses: actions/cache@v2
+        env:
+          cache-name: ccache
+        with:
+          path: ~/.ccache
+          key: ${{ env.name }}-${{ env.cache-name }}-${{ hashFiles('**/configure.ac') }}
+      - name: Build Pigeoncoinclassic
         run: |
-          echo "building with $(nproc) threads"
-          make -C depends -j$(nproc) HOST=arm-linux-gnueabihf
-      - name: configure
-        run: |
+          depends/${{ env.host }}/native/bin/ccache --max-size=100M
           ./autogen.sh
-          ./configure --prefix=`pwd`/depends/arm-linux-gnueabihf
-      - name: build binary
-        run: |
-          make -j$(nproc)
-          mkdir -p $BUILD_DIR
-          mv src/{pigeon-cli,pigeon-tx,pigeond,qt/pigeon-qt} $BUILD_DIR/
-      - name: generate checksum and compress binary
-        run: |
-          echo "buildng $BUILD_VERSION version"
-          cd $BUILD_DIR
-          echo "sha256:" >> checksums.txt
-          echo "------------------------------------" >> checksums.txt
-          shasum * >> checksums.txt
-          echo "------------------------------------" >> checksums.txt
-          echo "openssl-sha256:" >> checksums.txt
-          echo "------------------------------------" >> checksums.txt
-          sha256sum * >> checksums.txt
-          cat checksums.txt
-          cd ..
-          tar -cvzf ${COIN_NAME}-arm32-${BUILD_VERSION}.tar.gz $BUILD_DIR/*
-          mkdir -p ${COMPRESS_DIR}
-          mv ${COIN_NAME}-arm32-${BUILD_VERSION}.tar.gz ${COMPRESS_DIR}/
-          cd ${COMPRESS_DIR}
-          echo "sha256: `shasum ${COIN_NAME}-arm32-${BUILD_VERSION}.tar.gz`" >> checksums.txt
-          echo "openssl-sha256: `sha256sum ${COIN_NAME}-arm32-${BUILD_VERSION}.tar.gz`" >> checksums.txt
-          cat checksums.txt
-          cd ..
-      - name: Upload Binary Artifacts
-        uses: actions/upload-artifact@v3
+          ./configure --prefix=`pwd`/depends/${{ env.host }} ${{ env.config-opts }} || ( cat config.log && false)
+          make ${{ env.goal }} || ( echo "Build failure. Verbose build follows." && make ${{ env.goal }} V=1 ; false )
+          mv Pigeoncoinclassic-Core.dmg Pigeoncoinclassic.dmg
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
         with:
-          name: ${{ env.COIN_NAME }}-arm32-${{ env.BUILD_VERSION }}
-          path: ${{ env.COMPRESS_DIR }}
-  build-arm-64:
-    name: arm 64 bit build
-    needs: checking-build-version
-    runs-on: ubuntu-18.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Getting Version
-        uses: actions/download-artifact@v1
-        with:
-          name: version
-      - name: Extract version
-        run: |
-          cat version/version.txt >> $GITHUB_ENV
-      - name: Install Required Packages
-        run: |
-          sudo apt-get update -y
-          sudo apt-get upgrade -y
-          sudo apt-get install curl build-essential libtool g++-aarch64-linux-gnu autotools-dev automake pkg-config python3 bsdmainutils cmake
-      - name: build depends
-        run: |
-          echo "building with $(nproc) threads"
-          make -C depends -j$(nproc) HOST=aarch64-linux-gnu
-      - name: configure
-        run: |
-          ./autogen.sh
-          ./configure --prefix=`pwd`/depends/aarch64-linux-gnu
-      - name: build binary
-        run: |
-          make -j$(nproc)
-          mkdir -p $BUILD_DIR
-          mv src/{pigeon-cli,pigeon-tx,pigeond,qt/pigeon-qt} $BUILD_DIR/
-      - name: generate checksum and compress binary
-        run: |
-          echo "buildng $BUILD_VERSION version"
-          cd $BUILD_DIR
-          echo "sha256:" >> checksums.txt
-          echo "------------------------------------" >> checksums.txt
-          shasum * >> checksums.txt
-          echo "------------------------------------" >> checksums.txt
-          echo "openssl-sha256:" >> checksums.txt
-          echo "------------------------------------" >> checksums.txt
-          sha256sum * >> checksums.txt
-          cat checksums.txt
-          cd ..
-          tar -cvzf ${COIN_NAME}-arm64-${BUILD_VERSION}.tar.gz $BUILD_DIR/*
-          mkdir -p ${COMPRESS_DIR}
-          mv ${COIN_NAME}-arm64-${BUILD_VERSION}.tar.gz ${COMPRESS_DIR}/
-          cd ${COMPRESS_DIR}
-          echo "sha256: `shasum ${COIN_NAME}-arm64-${BUILD_VERSION}.tar.gz`" >> checksums.txt
-          echo "openssl-sha256: `sha256sum ${COIN_NAME}-arm64-${BUILD_VERSION}.tar.gz`" >> checksums.txt
-          cat checksums.txt
-          cd ..
-      - name: Upload Binary Artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ env.COIN_NAME }}-arm64-${{ env.BUILD_VERSION }}
-          path: ${{ env.COMPRESS_DIR }}
-  build-win:
-    name: window build
-    needs: checking-build-version
-    runs-on: ubuntu-20.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Getting Version
-        uses: actions/download-artifact@v1
-        with:
-          name: version
-      - name: Extract version
-        run: |
-          cat version/version.txt >> $GITHUB_ENV
-      - name: Install Required Packages
-        run: |
-          sudo apt-get update -y
-          sudo apt-get upgrade -y
-          sudo apt-get install curl build-essential libtool autotools-dev automake pkg-config python3 bsdmainutils cmake
-          sudo apt-get install -y g++-mingw-w64-x86-64 gcc-mingw-w64-x86-64 nsis
-          sudo update-alternatives --set x86_64-w64-mingw32-gcc /usr/bin/x86_64-w64-mingw32-gcc-posix
-          sudo update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix
-      - name: build depends
-        run: |
-          echo "building with $(nproc) threads"
-          make -C depends -j$(nproc) HOST=x86_64-w64-mingw32
-      - name: configure
-        run: |
-          ./autogen.sh
-          ./configure --prefix=`pwd`/depends/x86_64-w64-mingw32
-      - name: build binary
-        run: |
-          make -j$(nproc)
-          mkdir -p $BUILD_DIR
-          mv src/{pigeon-cli.exe,pigeon-tx.exe,pigeond.exe,qt/pigeon-qt.exe} $BUILD_DIR/
-          strip $BUILD_DIR/*
-      - name: generate checksum and compress binary
-        run: |
-          echo "buildng $BUILD_VERSION version"
-          cd $BUILD_DIR
-          echo "sha256:" >> checksums.txt
-          echo "------------------------------------" >> checksums.txt
-          shasum * >> checksums.txt
-          echo "------------------------------------" >> checksums.txt
-          echo "openssl-sha256:" >> checksums.txt
-          echo "------------------------------------" >> checksums.txt
-          sha256sum * >> checksums.txt
-          cat checksums.txt
-          cd ..
-          zip -r ${COIN_NAME}-win-${BUILD_VERSION}.zip $BUILD_DIR/
-          mkdir -p ${COMPRESS_DIR}
-          mv ${COIN_NAME}-win-${BUILD_VERSION}.zip ${COMPRESS_DIR}/
-          cd ${COMPRESS_DIR}
-          echo "sha256: `shasum ${COIN_NAME}-win-${BUILD_VERSION}.zip`" >> checksums.txt
-          echo "openssl-sha256: `sha256sum ${COIN_NAME}-win-${BUILD_VERSION}.zip`" >> checksums.txt
-          cat checksums.txt
-          cd ..
-      - name: Upload Binary Artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ env.COIN_NAME }}-win-${{ env.BUILD_VERSION }}
-          path: ${{ env.COMPRESS_DIR }}
-      - name: generate window installation file
-        run: |
-          make deploy
-          mkdir win64-installation
-          mv *.exe win64-installation/
-          cd win64-installation
-          echo "sha256: `shasum *.exe`" >> checksums.txt
-          echo "openssl-sha25: `sha256sum *.exe`" >> checksums.txt
-          cd ..
-      - name: Upload window installation file
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ env.COIN_NAME }}-win-installation-${{ env.BUILD_VERSION }}
-          path: win64-installation
+          name: macos-binaries
+          path: |
+            Pigeoncoinclassic.dmg
