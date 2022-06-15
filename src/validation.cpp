@@ -90,6 +90,8 @@ arith_uint256 nMinimumChainWork;
 CFeeRate minRelayTxFee = CFeeRate(DEFAULT_MIN_RELAY_TX_FEE);
 CAmount maxTxFee = DEFAULT_TRANSACTION_MAXFEE;
 
+uint64_t nMaxReorgLength = DEFAULT_MAX_REORG_LENGTH;
+
 CBlockPolicyEstimator feeEstimator;
 CTxMemPool mempool(&feeEstimator);
 
@@ -2353,6 +2355,13 @@ static bool ActivateBestChainStep(CValidationState& state, const CChainParams& c
     AssertLockHeld(cs_main);
     const CBlockIndex *pindexOldTip = chainActive.Tip();
     const CBlockIndex *pindexFork = chainActive.FindFork(pindexMostWork);
+
+    // Reject fork if reorg is too long.
+    auto reorgLength = pindexOldTip ? pindexOldTip->nHeight - (pindexFork ? pindexFork->nHeight : -1) : 0;
+    if (reorgLength > nMaxReorgLength) {
+      LogPrintf("Rejecting reorg of length %d\n", reorgLength);
+      return false;
+    }
 
     // Disconnect active blocks which are no longer in the best chain.
     bool fBlocksDisconnected = false;
