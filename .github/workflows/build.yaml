@@ -8,49 +8,47 @@ on:
       - 'ft/*'
   pull_request:
     branches:
-      - develop
+      - master
 env:
-  COIN_NAME: pigeon
-  BUILD_DIR: pigeon-build
-  COMPRESS_DIR: pigeon-compress
-  TEST_LOG_ARTIFACT_DIR: test-logs
+  SOURCE_ARTIFACT: source
 jobs:
-  checking-build-version:
-    name: Checking Build Versioning
+  create-source-distribution:
+    name: Create Source Distribution
     runs-on: ubuntu-18.04
+    env:
+      ARTIFACT_DIR: source
     steps:
-      - name: Trigger by
-        run: |
-          echo "checking out $GITHUB_REF trigger by $GITHUB_EVENT_NAME"
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Read build.properties key for master
-        if: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/master'}}
-        id: release-version
-        uses: christian-draeger/read-properties@1.0.1
-        with:
-          path: build.properties
-          property: 'release-version'
-      - name: Read build.properties key for develop
-        if: ${{ github.event_name == 'pull_request' || endsWith(github.ref, 'develop') || contains(github.ref, 'ft/')}}
-        id: snapshot-version
-        uses: christian-draeger/read-properties@1.0.1
-        with:
-          path: build.properties
-          property: 'snapshot-version'
-      - name: create version
-        if: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/master'}}
-        run: |
-          echo "BUILD_VERSION=${{ steps.release-version.outputs.value }}" > version.txt
-      - name: create snapshot version
-        if: ${{ github.event_name == 'pull_request' || endsWith(github.ref, 'develop') || contains(github.ref, 'ft/')}}
-        run: |
-          echo "BUILD_VERSION=${{ steps.snapshot-version.outputs.value }}" > version.txt
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: version
-          path: version.txt
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Install Required Packages
+      run: |
+        sudo apt-get install build-essential libtool autotools-dev automake pkg-config libssl-dev libevent-dev bsdmainutils python3
+        sudo apt-get install libboost-system-dev libboost-filesystem-dev libboost-chrono-dev libboost-program-options-dev libboost-test-dev libboost-thread-dev
+        sudo apt-get install libboost-all-dev
+        sudo apt-get install libdb5.3-dev libdb5.3++-dev
+        sudo apt-get update
+        sudo apt-get install libminiupnpc-dev
+        sudo apt-get install libzmq3-dev
+        sudo apt-get install libqt5gui5 libqt5core5a libqt5dbus5 qttools5-dev qttools5-dev-tools libprotobuf-dev protobuf-compiler
+        sudo apt-get install libqrencode-dev
+    - name: Create Distribution Tarball
+      run: |
+        ./autogen.sh
+        ./configure --with-miniupnpc
+        make dist
+    - name: Download Dependencies
+      run: make -C depends download
+    - name: Create Dependencies Tarball
+      run: tar -czf depends.tar.gz depends
+    - name: Prepare Files for Artifact
+      run: |
+        mkdir -p $ARTIFACT_DIR
+        mv depends.tar.gz dingocoin-*.tar.gz $ARTIFACT_DIR
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v1
+      with:
+        name: ${{ env.SOURCE_ARTIFACT }}
+        path: ${{ env.ARTIFACT_DIR }}
 
   build-ubuntu18:
     name: Ubuntu18 build
@@ -111,65 +109,6 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: ${{ env.COIN_NAME }}-ubuntu18-${{ env.BUILD_VERSION }}
-          path: ${{ env.COMPRESS_DIR }}
-  build-ubuntu20:
-    name: Ubuntu20 build
-    needs: checking-build-version
-    runs-on: ubuntu-20.04
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v2
-      - name: Getting Version
-        uses: actions/download-artifact@v1
-        with:
-          name: version
-      - name: Extract version
-        run: |
-          cat version/version.txt >> $GITHUB_ENV
-      - name: Install Required Packages
-        run: |
-          sudo apt-get update -y
-          sudo apt-get upgrade -y
-          sudo apt-get install curl build-essential libtool autotools-dev automake pkg-config python3 bsdmainutils cmake
-      - name: build depends
-        run: |
-          echo "building with $(nproc) threads"
-          make -C depends -j$(nproc)
-      - name: configure
-        run: |
-          ./autogen.sh
-          ./configure --prefix=`pwd`/depends/x86_64-pc-linux-gnu
-      - name: build binary
-        run: |
-          make -j$(nproc)
-          mkdir -p $BUILD_DIR
-          mv src/{pigeon-cli,pigeon-tx,pigeond,qt/pigeon-qt} $BUILD_DIR/
-          strip $BUILD_DIR/*
-      - name: generate checksum and compress
-        run: |
-          echo "buildng $BUILD_VERSION version"
-          cd $BUILD_DIR
-          echo "sha256:" >> checksums.txt
-          echo "------------------------------------" >> checksums.txt
-          shasum * >> checksums.txt
-          echo "------------------------------------" >> checksums.txt
-          echo "openssl-sha256:" >> checksums.txt
-          echo "------------------------------------" >> checksums.txt
-          sha256sum * >> checksums.txt
-          cat checksums.txt
-          cd ..
-          tar -cvzf ${COIN_NAME}-ubuntu20-${BUILD_VERSION}.tar.gz $BUILD_DIR/*
-          mkdir -p ${COMPRESS_DIR}
-          mv ${COIN_NAME}-ubuntu20-${BUILD_VERSION}.tar.gz ${COMPRESS_DIR}/
-          cd ${COMPRESS_DIR}
-          echo "sha256: `shasum ${COIN_NAME}-ubuntu20-${BUILD_VERSION}.tar.gz`" >> checksums.txt
-          echo "openssl-sha256: `sha256sum ${COIN_NAME}-ubuntu20-${BUILD_VERSION}.tar.gz`" >> checksums.txt
-          cat checksums.txt
-          cd ..
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ env.COIN_NAME }}-ubuntu20-${{ env.BUILD_VERSION }}
           path: ${{ env.COMPRESS_DIR }}
   build-macos:
     name: macos build

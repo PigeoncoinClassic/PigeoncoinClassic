@@ -152,10 +152,10 @@ public:
 	    											"rLzD7RxVS1QMZ5yYrmoUvfnTNuzgUqJVVK", 738178);
 
         // The best chain should have at least this much work.
-        consensus.nMinimumChainWork = uint256S("0x000000000000000000000000000000000000000000000000061e4199f0f97030"); 
+        consensus.nMinimumChainWork = uint256S("0x0000000000000000000000000000000000000000000000008b8c61d6eb4ba440"); 
 
         // By default assume that the signatures in ancestors of this block are valid.
-        consensus.defaultAssumeValid = uint256S("0x000000000023d0c447406c5f05c4f51c70ec3faa5fe3943c1b3136785ebd7cc0");
+        consensus.defaultAssumeValid = uint256S("0x000001b43c270d7ade7269339ab3144479da76165d4a4b320d119bb16dd91493");
 
         /**
          * The message start string is designed to be unlikely to occur in normal data.
@@ -228,14 +228,11 @@ public:
         assert(genesis.hashMerkleRoot == uint256S("0xf0cc5f92b11a6655a4939fc239e8bf960cd0453b87b5a0820ab36904279341a5"));
 
 	/// Official DNS Seeds
-        vSeeds.emplace_back("seed.pigeoncoin.org", false);
-        vSeeds.emplace_back("seed2.pigeoncoin.org", false);
-        vSeeds.emplace_back("seed3.pigeoncoin.org", false);
-        vSeeds.emplace_back("seed4.pigeoncoin.org", false);
+        vSeeds.emplace_back("seed.pigeoncoinclassic.org", false);
+        vSeeds.emplace_back("seed2.pigeoncoinclassic.org", false);
+        vSeeds.emplace_back("seed3.pigeoncoinclassic.org", false);
+        vSeeds.emplace_back("seed4.pigeoncoinclassic.org", false);
         vSeeds.emplace_back("157.230.41.76", false);
-
-	/// Community DNS Seeds
-        vSeeds.emplace_back("seed.pigeoncoin.xyz", false);
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1,55); // changed 60 to 55
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1,122); // changed 122 to 123
@@ -254,14 +251,14 @@ public:
         newProtocolBlock = 738178;
         checkpointData = (CCheckpointData) {
             {
-            	 { 699153, uint256S("0x00000000002ccebf8a0c2a66ae6b4e03ba0e0247b467fbf68b6fd13d93ebf84e")},
+            	 { 2113000, uint256S("0x000001b43c270d7ade7269339ab3144479da76165d4a4b320d119bb16dd91493")},
             }
         };
 
         chainTxData = ChainTxData{
             // Update as we know more about the contents of the Pigeon chain
-        	1568755000, // * UNIX timestamp of last known number of transactions
-			519492,          // * total number of transactions between genesis and that timestamp
+        	1655254151, // * UNIX timestamp of last known number of transactions
+			3684511,          // * total number of transactions between genesis and that timestamp
                         //   (the tx=... number in the SetBestChain debug.log lines)
             0.1         // * estimated number of transactions per second after that timestamp
         };
