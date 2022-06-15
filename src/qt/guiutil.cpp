@@ -188,7 +188,7 @@ bool parsePigeonURI(const QUrl &uri, SendCoinsRecipient *out)
         {
             if(!i->second.isEmpty())
             {
-                if(!PigeonUnits::parse(PigeonUnits::PGN, i->second, &rv.amount))
+                if(!PigeonUnits::parse(PigeonUnits::PGC, i->second, &rv.amount))
                 {
                     return false;
                 }
@@ -227,7 +227,7 @@ QString formatPigeonURI(const SendCoinsRecipient &info)
 
     if (info.amount)
     {
-        ret += QString("?amount=%1").arg(PigeonUnits::format(PigeonUnits::PGN, info.amount, false, PigeonUnits::separatorNever));
+        ret += QString("?amount=%1").arg(PigeonUnits::format(PigeonUnits::PGC, info.amount, false, PigeonUnits::separatorNever));
         paramCount++;
     }
 

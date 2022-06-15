@@ -44,7 +44,7 @@ IjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA1S9wVLfTplJuT/1OaaBgl/Mb\
 I392v8S9kHbzYz7B4OTMslaO7piz0v3SO3TKMh0dswjiRdHrIgpO7XdIUQiU/ugg\
 xDw0kuNehfz1ycaGedlFFtFHTNXqLyIUF3dlwHhQwaomM6RXoJmxLny5BhYHEcmk\
 yWwr3Cdjd9gAZpblugVJB9C1e40uyL8ao4PHdLzOqO27iSe6riP8SwwisJZEbMaz\
-AZpgNEEMbIXPJEFvm5HTRXSMtQCOTSZYMFF0M2yrtmlECnz7hWP19b9bcoDzZQB4\
+AZPGCEEMbIXPJEFvm5HTRXSMtQCOTSZYMFF0M2yrtmlECnz7hWP19b9bcoDzZQB4\
 ylIsFG/7q2jV7MC/e2STZv+niJiHL08RUdoFpAgzaxMgqj63C7B55HgNDNHJYQID\
 AQABoxAwDjAMBgNVHRMEBTADAQH/MA0GCSqGSIb3DQEBCwUAA4IBAQBGejPxLxj9\
 +crv6gUeEBMZPiUx7pUgcI22Wm5yymP96B4fwI3Y0DBehq20d76vbWGPN17Z6pH3\
@@ -436,7 +436,7 @@ d2hj739GDLz0b5KuJ2SG6VknMRQM976w/m2qlq0ccVGaaZ2zMIGfpzL3p6adwx/5\
 ";
 
 //
-// Payment request with amount overflow (amount is set to 21000001 PGN)
+// Payment request with amount overflow (amount is set to 21000001 PGC)
 //
 const char* paymentrequest5_cert2_BASE64 =
 "\

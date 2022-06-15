@@ -27,7 +27,7 @@ class TxViewDelegate : public QAbstractItemDelegate
     Q_OBJECT
 public:
     explicit TxViewDelegate(const PlatformStyle *_platformStyle, QObject *parent=nullptr):
-        QAbstractItemDelegate(parent), unit(PigeonUnits::PGN),
+        QAbstractItemDelegate(parent), unit(PigeonUnits::PGC),
         platformStyle(_platformStyle)
     {
 
@@ -242,7 +242,7 @@ void OverviewPage::setWalletModel(WalletModel *model)
         connect(model, SIGNAL(notifyWatchonlyChanged(bool)), this, SLOT(updateWatchOnlyLabels(bool)));
     }
 
-    // update the display unit, to not use the default ("PGN")
+    // update the display unit, to not use the default ("PGC")
     updateDisplayUnit();
 }
 

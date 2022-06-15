@@ -57,9 +57,9 @@ public:
      */
     enum Unit
     {
-        PGN,
-        mPGN,
-        uPGN
+        PGC,
+        mPGC,
+        uPGC
     };
 
     enum SeparatorStyle

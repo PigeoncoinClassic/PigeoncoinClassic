@@ -18,9 +18,9 @@ PigeonUnits::PigeonUnits(QObject *parent):
 QList<PigeonUnits::Unit> PigeonUnits::availableUnits()
 {
     QList<PigeonUnits::Unit> unitlist;
-    unitlist.append(PGN);
-    unitlist.append(mPGN);
-    unitlist.append(uPGN);
+    unitlist.append(PGC);
+    unitlist.append(mPGC);
+    unitlist.append(uPGC);
     return unitlist;
 }
 
@@ -28,9 +28,9 @@ bool PigeonUnits::valid(int unit)
 {
     switch(unit)
     {
-    case PGN:
-    case mPGN:
-    case uPGN:
+    case PGC:
+    case mPGC:
+    case uPGC:
         return true;
     default:
         return false;
@@ -41,9 +41,9 @@ QString PigeonUnits::name(int unit)
 {
     switch(unit)
     {
-    case PGN: return QString("PGN");
-    case mPGN: return QString("mPGN");
-    case uPGN: return QString::fromUtf8("μPGN");
+    case PGC: return QString("PGC");
+    case mPGC: return QString("mPGC");
+    case uPGC: return QString::fromUtf8("μPGC");
     default: return QString("???");
     }
 }
@@ -52,9 +52,9 @@ QString PigeonUnits::description(int unit)
 {
     switch(unit)
     {
-    case PGN: return QString("Pigeons");
-    case mPGN: return QString("Milli-Pigeons (1 / 1" THIN_SP_UTF8 "000)");
-    case uPGN: return QString("Micro-Pigeons (1 / 1" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
+    case PGC: return QString("Pigeons");
+    case mPGC: return QString("Milli-Pigeons (1 / 1" THIN_SP_UTF8 "000)");
+    case uPGC: return QString("Micro-Pigeons (1 / 1" THIN_SP_UTF8 "000" THIN_SP_UTF8 "000)");
     default: return QString("???");
     }
 }
@@ -63,9 +63,9 @@ qint64 PigeonUnits::factor(int unit)
 {
     switch(unit)
     {
-    case PGN:  return 100000000;
-    case mPGN: return 100000;
-    case uPGN: return 100;
+    case PGC:  return 100000000;
+    case mPGC: return 100000;
+    case uPGC: return 100;
     default:   return 100000000;
     }
 }
@@ -74,9 +74,9 @@ int PigeonUnits::decimals(int unit)
 {
     switch(unit)
     {
-    case PGN: return 8;
-    case mPGN: return 5;
-    case uPGN: return 2;
+    case PGC: return 8;
+    case mPGC: return 5;
+    case uPGC: return 2;
     default: return 0;
     }
 }
