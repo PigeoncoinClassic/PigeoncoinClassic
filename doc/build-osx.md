@@ -31,8 +31,8 @@ Build Pigeon Core
 
 1. Clone the pigeon source code and cd into `pigeon`
 
-        git clone https://github.com/PigeonProject/Pigeoncoin
-        cd Pigeoncoin
+        git clone https://github.com/PigeonProject/PigeoncoinClassic
+        cd PigeoncoinClassic
 
 2.  Build pigeon-core:
 
@@ -98,4 +98,4 @@ Notes
 
 * Tested on OS X 10.8 through 10.12 on 64-bit Intel processors only.
 
-* Building with downloaded Qt binaries is not officially supported. See the notes in [#7714](https://github.com/PigeonProject/Pigeoncoin/issues/7714)
+* Building with downloaded Qt binaries is not officially supported. See the notes in [#7714](https://github.com/PigeonProject/PigeoncoinClassic/issues/7714)

@@ -27,8 +27,8 @@ Build-Depends: debhelper,
  libzmq3-dev
 Standards-Version: 3.9.2
 Homepage: https://pigeon.org/
-Vcs-Git: git://github.com/PigeonProject/Pigeoncoin.git
-Vcs-Browser: https://github.com/PigeonProject/Pigeoncoin
+Vcs-Git: git://github.com/PigeonProject/PigeoncoinClassic.git
+Vcs-Browser: https://github.com/PigeonProject/PigeoncoinClassic
 
 Package: pigeond
 Architecture: any

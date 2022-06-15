@@ -2,7 +2,7 @@ Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: Pigeon
 Upstream-Contact: Satoshi Nakamoto <satoshin@gmx.com>
  irc://#pigeon@freenode.net
-Source: https://github.com/PigeonProject/Pigeoncoin
+Source: https://github.com/PigeonProject/PigeoncoinClassic
 
 Files: *
 Copyright: 2009-2017, Pigeon Core Developers

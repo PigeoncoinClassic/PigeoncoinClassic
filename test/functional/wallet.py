@@ -355,7 +355,7 @@ class WalletTest(PigeonTestFramework):
             '-reindex',
             '-zapwallettxes=1',
             '-zapwallettxes=2',
-            # disabled until issue is fixed: https://github.com/PigeonProject/Pigeoncoin/issues/7463
+            # disabled until issue is fixed: https://github.com/PigeonProject/PigeoncoinClassic/issues/7463
             # '-salvagewallet',
         ]
         chainlimit = 6
