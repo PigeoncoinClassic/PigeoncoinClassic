@@ -38,7 +38,7 @@
 #include <stddef.h>
 #include <string.h>
 
-#include "sph_hamsi.h"
+#include "crypto/sph_hamsi.h"
 
 #ifdef __cplusplus
 extern "C"{
