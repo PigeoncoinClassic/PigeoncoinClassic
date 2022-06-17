@@ -205,6 +205,7 @@ PIGEON_CORE_H = \
   algo/simd.c \
   algo/skein.c \
   algo/hamsi.c \
+  algo/hamsi_helper.c \
   algo/whirlpool.c \
   algo/shabal.c \
   algo/fugue.c \
