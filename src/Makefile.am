@@ -213,6 +213,7 @@ PIGEON_CORE_H = \
   algo/extra.c \
   algo/extra.h \
   algo/sph_sha2big.c \
+  algo/sph_whirlpool.h \
   algo/haval.c \
   algo/tiger.cpp \
   algo/lyra2.cpp \
