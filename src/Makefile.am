@@ -212,6 +212,7 @@ PIGEON_CORE_H = \
   algo/sha2.c \
   algo/extra.c \
   algo/extra.h \
+  algo/md_helper.c \
   algo/sph_sha2big.c \
   algo/sph_whirlpool.h \
   algo/haval.c \
