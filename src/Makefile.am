@@ -185,6 +185,7 @@ PIGEON_CORE_H = \
   algo/sph_cubehash.h \
   algo/sph_simd.h \
   algo/sph_echo.h \
+  algo/sph_shabal.h \
   algo/sph_shavite.h \
   algo/sph_sha2.h \
   algo/sph_haval.h \
