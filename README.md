@@ -3,6 +3,8 @@ PigeoncoinClassic - Ending data collection in social media
 
 Official Website: https://PigeoncoinClassic.org
 
+Official Discord Channel: https://discord.gg/SZcf63h
+
 Abstract
 --------
 PigeoncoinClassic aims to implement a blockchain which is optimized specifically to complete an altruistic goal: to end data collection in social media.
