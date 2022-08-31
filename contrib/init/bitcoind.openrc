@@ -2,8 +2,8 @@
 
 # backward compatibility for existing gentoo layout 
 #
-if [ -d "/var/lib/pigeon/.pigeon" ]; then
-	PIGEOND_DEFAULT_DATADIR="/var/lib/pigeon/.pigeon"
+if [ -d "/var/lib/pigeon/.pigeonclassic" ]; then
+	PIGEOND_DEFAULT_DATADIR="/var/lib/pigeon/.pigeonclassic"
 else
 	PIGEOND_DEFAULT_DATADIR="/var/lib/pigeond"
 fi

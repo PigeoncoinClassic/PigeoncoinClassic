@@ -526,10 +526,10 @@ fs::path GetDefaultDataDir()
     // Windows < Vista: C:\Documents and Settings\Username\Application Data\Pigeon
     // Windows >= Vista: C:\Users\Username\AppData\Roaming\Pigeon
     // Mac: ~/Library/Application Support/Pigeon
-    // Unix: ~/.pigeon
+    // Unix: ~/.pigeonclassic
 #ifdef WIN32
     // Windows
-    return GetSpecialFolderPath(CSIDL_APPDATA) / "Pigeon";
+    return GetSpecialFolderPath(CSIDL_APPDATA) / "Pigeonclassic";
 #else
     fs::path pathRet;
     char* pszHome = getenv("HOME");
@@ -539,10 +539,10 @@ fs::path GetDefaultDataDir()
         pathRet = fs::path(pszHome);
 #ifdef MAC_OSX
     // Mac
-    return pathRet / "Library/Application Support/Pigeon";
+    return pathRet / "Library/Application Support/Pigeonclassic";
 #else
     // Unix
-    return pathRet / ".pigeon";
+    return pathRet / ".pigeonclassic";
 #endif
 #endif
 }
